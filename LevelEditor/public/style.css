@@ -1,0 +1,156 @@
+body {
+    margin: 0;
+    font-family: sans-serif;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    background: #f3f3f5;
+    color: #333;
+}
+
+header {
+    background: #6c63ff;
+    color: white;
+    padding: 20px;
+    text-align: center;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+}
+
+header p {
+    margin: 4px 0 0;
+    opacity: 0.9;
+}
+
+main {
+    display: flex;
+    flex: 1;
+    padding: 15px;
+    gap: 20px;
+}
+
+.main-content {
+    flex: 0 1 75%;
+    text-align: center;
+}
+
+.panel {
+    background: white;
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.12);
+}
+
+.panel h2 {
+    margin-top: 0;
+    font-size: 1.2rem;
+}
+
+.panel label {
+    display: block;
+    font-size: 0.95rem;
+    margin-bottom: 12px;
+}
+
+.panel input {
+    width: 100%;
+    padding: 6px 8px;
+    border-radius: 5px;
+    border: 1px solid #bbb;
+    margin-top: 4px;
+}
+
+.button-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+button {
+    padding: 6px 12px;
+    border: none;
+    border-radius: 5px;
+    background: #6c63ff;
+    color: white;
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: background 0.2s, transform 0.1s;
+}
+
+button:hover {
+    background: #5850e0;
+}
+
+button:active {
+    transform: scale(0.96);
+}
+
+button.danger {
+    background: #d9534f;
+}
+
+button.danger:hover {
+    background: #c14542;
+}
+
+#editor-panel {
+    flex: 1;
+}
+
+#editor-panel h2 {
+    margin-top: 0;
+}
+
+#editor {
+    width: 800px;
+    height: 600px;
+    background: #e1e1e3;
+    border-radius: 8px;
+    border: 2px dashed #777;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+}
+
+.hint {
+    margin-top: 5px;
+    font-size: 0.85rem;
+    color: #666;
+}
+
+.block {
+    width: 100px;
+    height: 100px;
+    position: absolute;
+    border-radius: 6px;
+    background: linear-gradient(#222, #000);
+    border: 1px solid rgba(0,0,0,0.25);
+}
+
+.woodBlock {
+    background: linear-gradient(45deg, #b87333, #a05d2b);
+    border: 1px solid #5a3b1c;
+}
+
+.iceBlock {
+    background: linear-gradient(180deg, #d6f3ff, #9dd0ef);
+    opacity: 0.9;
+    border: 1px solid #68a8c8;
+}
+
+.stoneBlock {
+    background: linear-gradient(180deg, #777, #555);
+    border: 1px solid #333;
+}
+
+.enemy {
+    background: radial-gradient(circle at 40% 35%, #4adf4a, #1f7f1f);
+    border-radius: 50%;
+    border: 2px solid #0e450e;
+}
+
+.catapult {
+    background: linear-gradient(90deg, #8b5a2b, #70421c);
+    border: 3px solid #3b2413;
+    border-radius: 10px;
+}
