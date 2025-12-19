@@ -17,3 +17,9 @@ When a level is saved the level editor creates a JSON file that contains all the
 This folder contains the code to run de game. The levels need to be added to the game's `levels` folder.
 
 The game reads all the JSON files generated and draws all the elements in a Canvas. The physics are calculated with Planck.
+
+### Controls
+
+To run the level editor download cors and express, then open the command promt an run: npm run dev
+
+To run Super Mad Flying Creatures open the command prompt and run: npx http-server -c-1
