@@ -34,8 +34,8 @@
   {
     "id": "obj4",
     "type": "enemy",
-    "x": 624,
-    "y": 491,
+    "x": 625,
+    "y": 509,
     "width": 50,
     "height": 50
   },
@@ -64,26 +64,10 @@
     "height": 50
   },
   {
-    "id": "obj8",
-    "type": "iceBlock",
-    "x": 734,
-    "y": 494,
-    "width": 50,
-    "height": 50
-  },
-  {
-    "id": "obj9",
-    "type": "iceBlock",
-    "x": 734,
-    "y": 439,
-    "width": 50,
-    "height": 50
-  },
-  {
     "id": "obj10",
     "type": "enemy",
-    "x": 734,
-    "y": 383,
+    "x": 732,
+    "y": 513,
     "width": 50,
     "height": 50
   }
