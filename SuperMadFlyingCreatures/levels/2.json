@@ -1,0 +1,90 @@
+[
+  {
+    "id": "obj0",
+    "type": "catapult",
+    "x": 97,
+    "y": 544,
+    "width": 50,
+    "height": 50
+  },
+  {
+    "id": "obj1",
+    "type": "block",
+    "x": 570,
+    "y": 548,
+    "width": 50,
+    "height": 50
+  },
+  {
+    "id": "obj2",
+    "type": "woodBlock",
+    "x": 625,
+    "y": 548,
+    "width": 50,
+    "height": 50
+  },
+  {
+    "id": "obj3",
+    "type": "woodBlock",
+    "x": 679,
+    "y": 548,
+    "width": 50,
+    "height": 50
+  },
+  {
+    "id": "obj4",
+    "type": "enemy",
+    "x": 624,
+    "y": 491,
+    "width": 50,
+    "height": 50
+  },
+  {
+    "id": "obj5",
+    "type": "stoneBlock",
+    "x": 514,
+    "y": 548,
+    "width": 50,
+    "height": 50
+  },
+  {
+    "id": "obj6",
+    "type": "iceBlock",
+    "x": 456,
+    "y": 548,
+    "width": 50,
+    "height": 50
+  },
+  {
+    "id": "obj7",
+    "type": "iceBlock",
+    "x": 735,
+    "y": 548,
+    "width": 50,
+    "height": 50
+  },
+  {
+    "id": "obj8",
+    "type": "iceBlock",
+    "x": 734,
+    "y": 494,
+    "width": 50,
+    "height": 50
+  },
+  {
+    "id": "obj9",
+    "type": "iceBlock",
+    "x": 734,
+    "y": 439,
+    "width": 50,
+    "height": 50
+  },
+  {
+    "id": "obj10",
+    "type": "enemy",
+    "x": 734,
+    "y": 383,
+    "width": 50,
+    "height": 50
+  }
+]

@@ -11,6 +11,7 @@ app.use(express.json());
 app.use(express.static("public"));
 
 const LEVELS_DIR = path.join(__dirname, 'levels');
+const INDEX_FILE = path.join(LEVELS_DIR, 'index.json');
 
 if (!fs.existsSync(LEVELS_DIR)) {
 	fs.mkdirSync(LEVELS_DIR);
@@ -21,8 +22,32 @@ function levelFilePath(id) {
 	return path.join(LEVELS_DIR, `${id}.json`);
 }
 
+function rebuildIndexFile() {
+	fs.readdir(LEVELS_DIR, (err, files) => {
+		if (err) {
+			console.error("Failed to read levels directory", err);
+			return;
+		}
+
+		const jsonFiles = files
+			.filter(f => f.endsWith('.json') && f !== 'index.json')
+			.sort();
+
+		fs.writeFile(
+			INDEX_FILE,
+			JSON.stringify(jsonFiles, null, 2),
+			'utf8',
+			err => {
+				if (err) {
+					console.error("Failed to write index.json", err);
+				}
+			}
+		);
+	});
+}
+
 function writeLevel(id, blocks, callback) {
-	const json = JSON.stringify(blocks);
+	const json = JSON.stringify(blocks, null, 2);
 	fs.writeFile(levelFilePath(id), json, "utf8", callback);
 }
 
@@ -73,6 +98,8 @@ app.post('/api/v1/levels', (req, res) => {
 			return res.status(500).json({error: "Failed to save level"});
 		}
 
+		rebuildIndexFile();
+
 		res.status(201).location(`/api/v1/levels/${id}`).json({message: "level created", id, objects: blocks});
 	});
 });
@@ -93,6 +120,8 @@ app.put('/api/v1/levels/:id', (req, res) => {
 			console.error("Error saving data", err);
 			return res.status(500).json({error: "Failed to save level"});
 		}
+
+		rebuildIndexFile();
 
 		res.status(exists ? 200 : 201).json({
 			message: exists ? "Level updated" : "Level created",
@@ -115,6 +144,8 @@ app.delete('/api/v1/levels/:id', (req, res) => {
 			console.error("Error deleting data", err);
 			return res.status(500).json({error: "Failed to delete level"});
 		}
+
+		rebuildIndexFile();
 
 		res.status(204).send();
 	});

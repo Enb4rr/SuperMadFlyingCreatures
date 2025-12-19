@@ -5,6 +5,7 @@
     const footerEl = document.querySelector("footer");
 
     const SCALE = 30;
+    const X_OFFSET = 0.3;
 
     const resizeCanvas = () => {
         const headerHeight = headerEl?.offsetHeight ?? 0;
@@ -26,9 +27,8 @@
     const VELOCITY_ITERS = 8;
     const POSITION_ITERS = 3;
 
-    const BIRD_RADIUS = 0.5;
-    const BIRD_START = Vec2(5, 5);
-    const PIG_RADIUS = 0.3;
+    const BIRD_RADIUS = 0.8;
+    const PIG_RADIUS = 1;
 
     const BIRD_STOP_SPEED = 0.15;
     const BIRD_STOP_ANGULAR = 0.25;
@@ -52,64 +52,36 @@
 
     const {world, ground} = createWorld();
 
-
-    // const loadLevels = () => ([
-    //     {
-    //         pigs: [{x:2, y:1}],
-    //         boxes: [
-    //             {x:15, y:1, width:1, height:2},
-    //             {x:20, y:1, width:1, height:2},
-    //             {x:23, y:1, width:3, height:0.5}
-    //         ]
-    //     },
-    //     {
-    //         pigs: [{x:2, y:1}, {x:4, y:1}],
-    //         boxes: [
-    //             {x:15, y:1, width:1, height:2},
-    //             {x:20, y:1, width:1, height:2},
-    //             {x:23, y:1, width:3, height:0.5},
-    //             {x:21, y:3, width:3, height:0.5},
-    //             {x:20, y:3, width:3, height:0.5}
-    //         ]
-    //     }
-    // ]);
-
-    const loadLevels = async () => {
-        return fetch(`/levels/levels.json`)
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Failed to load levels index' + response.statusText);
-                }
-                return response.json();
-            })
-            .then(files => {
-                const requests = files.map((fileName, index) =>
-                    fetch(`/levels/${fileName}`)
-                        .then(response => {
-                            if (!response.ok) {
-                                throw new Error(`Failed to load ${fileName}` + response.statusText);
-                            }
-                            return response.json();
-                        })
-                        .then(data => ({
-                            key: `level${index}`,
-                            data: data
-                        }))
-                );
-                return Promise.all(requests);
-            })
-            .then(results => {
-                const levels = {};
-
-                results.forEach(result => {
-                    levels[result.key] = result.data;
-                });
-                return levels;
-            });
+    const loadLevels = () => {
+        const levels = [];
+        
+        return fetch(`/levels/index.json`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Failed to load level files ' + response.statusText);
+            }
+            return response.json();
+        })
+        .then(files => {
+            const jsonFiles = files.filter(file => file.toLowerCase().endsWith('.json'));
+            const requests = jsonFiles.map(file =>
+            fetch(`/levels/${file}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Failed to load level file ' + response.statusText);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    levels.push(data);
+                })
+            );
+            return Promise.all(requests);
+        }).then(() => levels);
     }
     
     const loadCurrentLevel = (currentLevel) => {
-        const level = state.levels[currentLevel].data;
+        const level = state.levels[currentLevel];
         var currentLevelData = {
             block: [],
             wood: [],
@@ -122,22 +94,22 @@
         level.forEach((block) => {
            switch (block.type) {
                case "block":
-                   currentLevelData.block.push(block.data);
+                   currentLevelData.block.push(block);
                    break
                case "woodBlock":
-                   currentLevelData.wood.push(block.data);
+                   currentLevelData.wood.push(block);
                    break
                case "iceBlock":
-                   currentLevelData.ice.push(block.data);
+                   currentLevelData.ice.push(block);
                    break
                case "stoneBlock":
-                   currentLevelData.stone.push(block.data);
+                   currentLevelData.stone.push(block);
                    break
                case "enemy":
-                   currentLevelData.pigs.push(block.data);
+                   currentLevelData.pigs.push(block);
                    break
                case "catapult":
-                   currentLevelData.catapult.push(block.data);
+                   currentLevelData.catapult.push(block);
                    break
            } 
         });
@@ -153,9 +125,12 @@
         isLevelComplete: false,
         pigs: [],
         boxes: [],
+        woodBlocks: [],
+        iceBlocks: [],
+        stoneBlocks: [],
+        catapult: [],
         bird: null,
         birdLaunched: false,
-
         isMouseDown: false,
         mousePosition: Vec2(0, 0),
         launchVector: Vec2(0, 0),
@@ -166,91 +141,13 @@
     };
 
     let birdIdleTime = 0;
-    let birdFLightTime = 0;
+    let birdFlightTime = 0;
     let levelCompleteTimer = null;
     let gameOverTimer = null;
 
     const resetBirdTimers = () => {
         birdIdleTime = 0;
-        birdFLightTime = 0;
-    };
-
-    // --------------
-    // Plank Utils
-    // --------------
-
-    const PositionToPercentage = (x, y) => {
-        return {
-            x: (x / LEVEL_EDITOR_WIDTH),
-            y: (y / LEVEL_EDITOR_HEIGHT)
-        }
-    }
-
-    const createBlock = (x, y, width, height, dynamic = true) => {
-        
-        const calculatedPos = PositionToPercentage(x, y);
-        
-        const body = world.createBody({
-            position: Vec2(calculatedPos.x * SCALE - width, SCALE - (calculatedPos.y * SCALE - height)),
-            type: dynamic ? "dynamic" : "static"
-        });
-
-        body.createFixture(pl.Box(width / 2, height / 2), {
-            density: 1.0,
-            friction: 0.5,
-            restitution: 0.1
-        });
-
-        return body;
-    };
-
-    const createPig = (x, y) => {
-        
-        const calculatedPos = PositionToPercentage(x, y);
-        
-        const body = world.createDynamicBody({
-            position: Vec2(calculatedPos.x * SCALE - PIG_RADIUS, SCALE - (calculatedPos.y * SCALE - PIG_RADIUS)),
-        });
-
-        body.createFixture(pl.Circle(PIG_RADIUS), {
-            density: 0.5,
-            friction: 0.5,
-            restitution: 0.1,
-            userData: "pig"
-        });
-
-        body.isPig = true;
-
-        return body;
-    };
-
-    const createBird = () => {
-        const bird = world.createDynamicBody(BIRD_START);
-        bird.createFixture(pl.Circle(BIRD_RADIUS), {
-            density: 0.5,
-            friction: 0.6,
-            restitution: 0.4
-        })
-
-        bird.setLinearDamping(0.35);
-        bird.setAngularDamping(0.35);
-        bird.setSleepingAllowed(true);
-
-        return bird;
-    };
-
-    const destroyBirdIfExists = () => {
-        if (state.bird) {
-            world.destroyBody(state.bird);
-        }
-    };
-
-    const clearWorldExceptGround = () => {
-        for (let body = world.getBodyList(); body;) {
-            const next = body.getNext();
-            if (body !== ground) world.destroyBody(body);
-            body = next;
-        }
+        birdFlightTime = 0;
     };
 
     // --------------
@@ -270,14 +167,17 @@
         }
 
         clearWorldExceptGround();
-
-        // Await for levels loading and then save them in the state
+        
         const loadedLevels = await loadLevels();
         setState({ levels : loadedLevels});
         
         // Create blocks
         const level = loadCurrentLevel(levelIndex);
         const boxes = level.block.map(b => createBlock(b.x, b.y, b.width / SCALE, b.height / SCALE, true));
+        const woodBlocks = level.wood.map(w => createBlock(w.x, w.y, w.width / SCALE, w.height / SCALE, true));
+        const iceBlocks = level.ice.map(i => createBlock(i.x, i.y, i.width / SCALE, i.height / SCALE, true));
+        const stoneBlocks = level.stone.map(s => createBlock(s.x, s.y, s.width / SCALE, s.height / SCALE, true));
+        const catapult = level.catapult.map(c => createBlock(c.x, c.y, c.width / SCALE, c.height / SCALE, true));
         const pigs = level.pigs.map(p => createPig(p.x, p.y));
 
         const bird = createBird();
@@ -286,7 +186,11 @@
         setState({
             pigs,
             boxes,
-            bird,
+            woodBlocks,
+            iceBlocks,
+            stoneBlocks,
+            catapult,
+            bird: bird,
             isLevelComplete: false,
             birdLaunched: false,
             birdsRemaining: 3,
@@ -311,6 +215,92 @@
         alert("Congratulations, you won!");
         setState({currentLevel: 0, score: 0});
         initLevel(0);
+    };
+
+    // --------------
+    // Plank Utils
+    // --------------
+
+    const PositionToPercentage = (x, y) => {
+        return {
+            x: (x / LEVEL_EDITOR_WIDTH + X_OFFSET),
+            y: (y / LEVEL_EDITOR_HEIGHT)
+        }
+    }
+
+    const createBlock = (x, y, width, height, dynamic = true) => {
+
+        const calculatedPos = PositionToPercentage(x, y);
+
+        const body = world.createBody({
+            position: Vec2(calculatedPos.x * SCALE - width, SCALE - (calculatedPos.y * SCALE + height)),
+            type: dynamic ? "dynamic" : "static"
+        });
+
+        body.createFixture(pl.Box(width / 2, height / 2), {
+            density: 1.0,
+            friction: 0.5,
+            restitution: 0.1
+        });
+
+        return body;
+    };
+
+    const createPig = (x, y) => {
+
+        const calculatedPos = PositionToPercentage(x, y);
+
+        const body = world.createDynamicBody({
+            position: Vec2(calculatedPos.x * SCALE - (PIG_RADIUS * 2), SCALE - (calculatedPos.y * SCALE + (PIG_RADIUS * 2))),
+        });
+
+        body.createFixture(pl.Circle(PIG_RADIUS), {
+            density: 0.5,
+            friction: 0.5,
+            restitution: 0.1,
+            userData: "pig"
+        });
+
+        body.isPig = true;
+
+        return body;
+    };
+
+    const createBird = () => {
+
+        const level = loadCurrentLevel(state.currentLevel);
+        const catapult = level.catapult[0];
+        const calculatedPos = PositionToPercentage(catapult.x, catapult.y);
+        
+        const bird = world.createDynamicBody({
+            position: Vec2(calculatedPos.x * SCALE - (BIRD_RADIUS * 2), SCALE - (calculatedPos.y * SCALE))
+        });
+        
+        bird.createFixture(pl.Circle(BIRD_RADIUS), {
+            density: 1.2,
+            friction: 0.6,
+            restitution: 0.4
+        })
+
+        bird.setLinearDamping(0.35);
+        bird.setAngularDamping(0.35);
+        bird.setSleepingAllowed(true);
+
+        return bird;
+    };
+
+    const destroyBirdIfExists = () => {
+        if (state.bird) {
+            world.destroyBody(state.bird);
+        }
+    };
+
+    const clearWorldExceptGround = () => {
+        for (let body = world.getBodyList(); body;) {
+            const next = body.getNext();
+            if (body !== ground) world.destroyBody(body);
+            body = next;
+        }
     };
 
     // --------------
@@ -353,7 +343,7 @@
         })
     });
 
-    canvas.addEventListener("mouseup", (event) => {
+    canvas.addEventListener("mouseup", () => {
         if (!state.isMouseDown || !state.bird) return;
 
         const bird = state.bird;
@@ -361,13 +351,13 @@
         bird.setAngularVelocity(0);
 
         const impulse = state.launchVector.mul(5);
+        
         bird.applyLinearImpulse(impulse, bird.getWorldCenter(), true);
-
         resetBirdTimers();
 
         setState({
             isMouseDown: false,
-            birdLunched: true,
+            birdLaunched: true,
             birdsRemaining: state.birdsRemaining - 1
         });
     });
@@ -395,7 +385,7 @@
 
         const normalImpulse = impulse.normalImpulses?.[0] ?? 0;
 
-        if (normalImpulse > 1.0) {
+        if (normalImpulse > 8.0) {
             pigBody.isDestroyed = true;
         }
     });
@@ -409,6 +399,7 @@
         if (!state.birdLaunched || !bird) return;
 
         birdFlightTime += TIME_STEP;
+        
         const speed = bird.getLinearVelocity().length();
         const ang = Math.abs(bird.getAngularVelocity());
 
@@ -428,7 +419,7 @@
         const outRight = pos.x > 50;
         const outLow = pos.y < -10;
         const idleLongEnough = birdIdleTime >= BIRD_IDLE_SECONDS;
-        const timedOut = birdFLightTime >= BIRD_MAX_FLIGHT_SECONDS;
+        const timedOut = birdFlightTime >= BIRD_MAX_FLIGHT_SECONDS;
 
         return outRight || outLow || idleLongEnough || timedOut;
     }
@@ -478,14 +469,14 @@
 
     const handleBirdLifecycle = () => {
         if (!shouldRespawnBird()) return;
-
+        
         if (state.birdsRemaining > 0) {
             respawnBird();
             return;
         }
 
         if (!state.isLevelComplete && !gameOverTimer) {
-            gameOverTimer = setTimerout(() => {
+            gameOverTimer = setTimeout(() => {
                 gameOverTimer = null;
                 alert("Game Over");
                 resetLevel();
@@ -517,8 +508,8 @@
         ctx.stroke();
     }
 
-    const drawBoxes = () => {
-        state.boxes.forEach((box) => {
+    const drawBoxes = (blocks, color) => {
+        blocks.forEach((box) => {
             const position = box.getPosition();
             const angle = box.getAngle();
             const shape = box.getFixtureList().getShape();
@@ -534,8 +525,8 @@
                 ctx.lineTo(vertices[i].x * SCALE, -vertices[i].y * SCALE);
             }
             ctx.closePath();
-
-            ctx.fillStyle = "#795548";
+            
+            ctx.fillStyle = color;
             ctx.fill();
             ctx.restore();
         });
@@ -587,7 +578,11 @@
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
         drawGround();
-        drawBoxes();
+        drawBoxes(state.boxes, '#795548');
+        drawBoxes(state.woodBlocks, '#311911');
+        drawBoxes(state.iceBlocks, '#3df8dc');
+        drawBoxes(state.stoneBlocks, '#4e4b4a');
+        drawBoxes(state.catapult, '#1b1310');
         drawPigs();
         drawBird();
         drawLaunchLine();
